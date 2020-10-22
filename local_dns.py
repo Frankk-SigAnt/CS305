@@ -145,11 +145,29 @@ def main():
                     print('    RD flag set. Processing iterative query...')
                     reply = request.reply()
                     request.header.set_rd(0)
-                    rr_list = query_domain(request.get_q().get_qname().idna(), request.header)
-                    reply.add_answer(*rr_list)
-                    if rr_list:
-                        print('    Updating cache...')
-                        dns_cache.put_record(reply)
+                    qname = request.get_q().get_qname().idna()
+                    cname_list = []
+                    while True:
+                        rr_list = query_domain(qname, request.header)
+                        if rr_list:
+                            reply.add_answer(*rr_list)
+                            have_a = False
+                            for rr in rr_list:
+                                if rr.rtype == QTYPE.A:
+                                    have_a = True
+                                    break
+                            if not have_a:
+                                cname_list += [rr for rr in rr_list if rr.rtype == QTYPE.CNAME]
+                            if cname_list:
+                                qname = cname_list[0].rdata.toZone()
+                                print('      Got CNAME record. Processing query for {}...'.format(qname.strip('.')))
+                                cname_list.pop(0)
+                            else:
+                                break
+                        else:
+                            break
+                    print('    Updating cache...')
+                    dns_cache.put_record(reply)
                     print('    Query finished. Sending response...')
                     server_sock.sendto(reply.pack(), client_addr)
                 else:
