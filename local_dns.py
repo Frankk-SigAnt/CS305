@@ -151,16 +151,11 @@ def main():
                         rr_list = query_domain(qname, request.header)
                         if rr_list:
                             reply.add_answer(*rr_list)
-                            have_a = False
-                            for rr in rr_list:
-                                if rr.rtype == QTYPE.A:
-                                    have_a = True
-                                    break
-                            if not have_a:
+                            if not all(rr.rtype == QTYPE.A for rr in rr_list):  # `all` or `any`?
                                 cname_list += [rr for rr in rr_list if rr.rtype == QTYPE.CNAME]
                             if cname_list:
+                                print('      Got CNAME record. Processing query for A record...')
                                 qname = cname_list[0].rdata.toZone()
-                                print('      Got CNAME record. Processing query for {}...'.format(qname.strip('.')))
                                 cname_list.pop(0)
                             else:
                                 break
