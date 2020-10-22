@@ -77,7 +77,7 @@ def socket_query(query, rr):
         query_sock.settimeout(1)
         query_resp, _ = query_sock.recvfrom(2048)
     except timeout:
-        print('        {} TIMEOUT'.format(rr.rdata.toZone()))
+        print(f'        {rr.rdata.toZone()} TIMEOUT')
         query_resp = query.reply().pack()
     finally:
         query_sock.close()
@@ -85,7 +85,7 @@ def socket_query(query, rr):
 
 
 def query_rr(qname, header, rr_list):
-    print('        -> {}'.format(qname))
+    print(f'        -> {qname}')
     query: DNSRecord = DNSRecord(header=header, questions=[DNSQuestion(qname)])
     for rr in rr_list:
         query_resp = socket_query(query, rr)
@@ -108,7 +108,7 @@ def query_rr(qname, header, rr_list):
 
 def query_domain(domain, header):
     domain = domain.strip('.')
-    print('      Query: {}'.format(domain))
+    print(f'      Query: {domain}')
     rr_list = root_ar
     names = domain.split('.')[::-1]
     qname = ''
@@ -131,7 +131,7 @@ def main():
             msg, client_addr = server_sock.recvfrom(2048)
             request = DNSRecord.parse(msg)
             print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-            print('Received request: {}'.format(request.get_q().qname))
+            print(f'Received request: {request.get_q().qname}')
             cached_rr = dns_cache.get_by_question(request.get_q())
             if cached_rr:
                 print('  In cache. Sending response...')
