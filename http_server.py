@@ -2,6 +2,8 @@ from asyncio import run, start_server, StreamReader, StreamWriter, AbstractServe
 from mimetypes import guess_type
 from pathlib import Path
 from typing import List, Tuple
+import argparse
+import time
 
 status = {
     200: '200 OK',
@@ -137,10 +139,12 @@ async def http_server_callback(reader: StreamReader, writer: StreamWriter):
     try:
         method, raw_path, _ = header[0].split()
         if method not in ['GET', 'HEAD']:
+            time.sleep(2)
             response: bytes = await get_error_response(405)
             print(method, raw_path, status[405])
         else:
             path = base_dir / raw_path.lstrip('/')
+            print(path)
             if path.is_dir():
                 response: bytes = await get_dir_response(path, raw_path)
                 print(method, raw_path, status[200])
@@ -158,8 +162,8 @@ async def http_server_callback(reader: StreamReader, writer: StreamWriter):
     writer.close()
 
 
-async def main():
-    server: AbstractServer = await start_server(http_server_callback, '127.0.0.1', 8080)
+async def main(port=8080):
+    server: AbstractServer = await start_server(http_server_callback, '127.0.0.1', port)
     addr = server.sockets[0].getsockname()
     print(f'Serving on {addr}...')
     async with server:
@@ -167,7 +171,14 @@ async def main():
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Simple Web File Browser')
+    parser.add_argument('--port', type=int, default=8080,
+                        help='An integer for the port of the simple web file browser')
+    parser.add_argument('--dir', type=str, default="./",
+                        help='The Directory that the browser should display for home page')
+    args = parser.parse_args()
     try:
-        run(main())
+        base_dir = Path(args.dir)
+        run(main(args.port))
     except KeyboardInterrupt:
         print('Server stopped.')
