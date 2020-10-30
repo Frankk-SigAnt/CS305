@@ -44,7 +44,7 @@ async def dir_html(path: Path, raw_path: str) -> bytes:
                f'<hr>\n' \
                f'</body>\n\n' \
                f'</html>'
-    return (html_begin + '\n'.join(f'<li><a href="{f.relative_to(base_dir)}">{f.name}</a></li>'
+    return (html_begin + '\n'.join(f'<li><a href="/{f.relative_to(base_dir)}">{f.name}</a></li>'
                                    for f in filter(lambda x: x.is_file() or x.is_dir(), path.iterdir()))
             + html_end).encode()
 
@@ -139,12 +139,11 @@ async def http_server_callback(reader: StreamReader, writer: StreamWriter):
     try:
         method, raw_path, _ = header[0].split()
         if method not in ['GET', 'HEAD']:
-            time.sleep(2)
+            # time.sleep(2)  # DON'T BLOCK ME!!!
             response: bytes = await get_error_response(405)
             print(method, raw_path, status[405])
         else:
             path = base_dir / raw_path.lstrip('/')
-            print(path)
             if path.is_dir():
                 response: bytes = await get_dir_response(path, raw_path)
                 print(method, raw_path, status[200])
