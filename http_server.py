@@ -44,9 +44,11 @@ async def dir_html(path: Path, raw_path: str) -> bytes:
                f'<hr>\n' \
                f'</body>\n\n' \
                f'</html>'
-    return (html_begin + '\n'.join(f'<li><a href="/{f.relative_to(base_dir)}">{f.name}</a></li>'
-                                   for f in filter(lambda x: x.is_file() or x.is_dir(), path.iterdir()))
-            + html_end).encode()
+    html_list = '\n'.join(f'<li><a href="/{f.relative_to(base_dir)}">{f.name}</a></li>' for f in
+                          filter(lambda x: x.is_file() or x.is_dir(), path.iterdir()))
+    if path != base_dir:
+        html_list = f'<li><a href="/{path.parent.relative_to(base_dir)}">..</a></li>\n' + html_list
+    return (html_begin + html_list + html_end).encode()
 
 
 async def get_mime_type(path: Path) -> str:
